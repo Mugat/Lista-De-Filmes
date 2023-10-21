@@ -1,0 +1,101 @@
+// Protocolo Movie representando um filme
+protocol Movie {
+    var title: String { get }
+    var director: String { get }
+    var year: Int { get }
+    var genre: Genre { get }
+}
+
+// Protocolo MovieCatalog representando um catálogo de filmes
+protocol MovieCatalog {
+    var movies: [Movie] { get }
+    mutating func addMovie(_ movie: Movie)
+}
+
+
+// Implementação da classe concreta MovieImpl que adere ao protocolo Movie
+class MovieImpl: Movie {
+    var title: String
+    var director: String
+    var year: Int
+    var genre: Genre
+
+    init(title: String, director: String, year: Int, genre: Genre) {
+        self.title = title
+        self.director = director
+        self.year = year
+        self.genre = genre
+    }
+}
+
+// Implementação da classe concreta MovieCatalogImpl que adere ao protocolo MovieCatalog
+class MovieCatalogImpl: MovieCatalog {
+    var movies: [Movie] = []
+
+    func addMovie(_ movie: Movie) {
+        movies.append(movie)
+    }
+}
+
+// Enum Genre permanece inalterado
+enum Genre: String {
+    case action
+    case comedy
+    case drama
+    case sciFi
+    case animation
+}
+func findMovies(in catalog: MovieCatalog, withGenre genre: Genre) -> [Movie] {
+    let moviesInGenre = catalog.movies.filter { $0.genre == genre }
+    return moviesInGenre
+}
+
+let sortByYear: (Movie, Movie) -> Bool = { movie1, movie2 in
+    return movie1.year < movie2.year
+}
+
+func recommendMovie(from catalog: MovieCatalog, releasedAfter year: Int) -> Movie? {
+    let availableMovies = catalog.movies.filter { $0.year > year }
+    
+    if let recommendedMovie = availableMovies.randomElement() {
+        return recommendedMovie
+    } else {
+        return nil
+    }
+}
+import Foundation
+
+let backgroundQueue = DispatchQueue.global(qos: .background)
+
+backgroundQueue.async {
+    sleep(2)
+    print("Pesquisa de filmes concluída.")
+}
+
+print("Aguarde a conclusão da pesquisa de filmes em segundo plano...")
+var movieCatalog = MovieCatalogImpl()
+
+let movie1 = MovieImpl(title: "Inception", director: "Christopher Nolan", year: 2010, genre: .sciFi)
+let movie2 = MovieImpl(title: "The Shawshank Redemption", director: "Frank Darabont", year: 1994, genre: .drama)
+let movie3 = MovieImpl(title: "Avengers: Endgame", director: "Anthony & Joe Russo", year: 2019, genre: .action)
+
+movieCatalog.addMovie(movie1)
+movieCatalog.addMovie(movie2)
+movieCatalog.addMovie(movie3)
+
+let actionMovies = findMovies(in: movieCatalog, withGenre: .action)
+print("Filmes de Ação:")
+for movie in actionMovies {
+    print("\(movie.title) (\(movie.year))")
+}
+
+movieCatalog.movies.sort(by: sortByYear)
+print("Filmes ordenados por ano de lançamento:")
+for movie in movieCatalog.movies {
+    print("\(movie.title) (\(movie.year))")
+
+if let recommendedMovie = recommendMovie(from: movieCatalog, releasedAfter: 2015) {
+    print("Recomendação: \(recommendedMovie.title) (\(recommendedMovie.year))")
+} else {
+    print("Nenhuma recomendação disponível.")
+}
